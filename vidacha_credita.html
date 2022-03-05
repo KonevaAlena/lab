@@ -1,0 +1,324 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <style>
+    * {
+      margin: 0;
+      transition: all .6s;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .row {
+      flex-direction: row;
+    }
+
+    .column {
+      flex-direction: column;
+    }
+
+    .navi {
+      justify-content: center;
+    }
+
+    .mitem {
+      margin: 10px;
+      border: 2px solid black;
+      color: black;
+      padding: 10px 60px;
+      font-weight: bold;
+    }
+
+    .mitem:hover {
+      color: #ffffff;
+      background: #199c68;
+      border: 2px solid #199c68;
+    }
+
+    button {
+      margin-top: 20px;
+      background: #000000;
+      color: #FFFFFF;
+      padding: 10;
+      border: none;
+      font-size: 1.2em;
+      justify-content: center;
+    }
+
+    #container {
+      justify-content: center;
+    }
+
+    input,
+    select,
+    option {
+      padding: 20px 20px;
+      border: none;
+      border: 1px solid #000000;
+      width: 100%;
+      font-size: 1em;
+    }
+
+    label {
+      padding: 10px 0;
+      margin: 10px 0;
+    }
+
+    #result {
+      font-size: 1.3em;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    table td {
+      padding: 5px 10px;
+    }
+
+    table thead {
+      padding: 20px 10px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+
+
+</head>
+
+<body>
+
+  <div class="flex row navi">
+    <div onclick="add();" class="flex mitem">Оформить кредит клиенту</div>
+    <div onclick="pay();" class="flex mitem">Погасить кредит частично</div>
+    <div onclick="deblist();" class="flex mitem">Обновить список должников</div>
+  </div>
+
+  <div id="container" class="flex column" style="align-items: center;width:100vw;margin-top:50px; ">
+
+
+  </div>
+
+  <div id="credok" style="display:none;">
+    <div style="font-weight:bold;font-size:2em;padding:50px 100px; color:#ffffff;background:#000000;">Кредит оформлен</div>
+  </div>
+
+  <div id="addcredit" style="display:none;" class="flex row">
+    <div class="flex column">
+      <form class='flex column' name="credit" style="width:400px;">
+        <label class='flex column'>
+          <span>Наименование организации</span>
+          <input name="name" placeholder="Название">
+        </label>
+
+        <!--    <label class='flex column'>
+            <span>Вид собственности</span>
+            <select name="vid">
+              <option value="1">Индивидуальная</option>
+              <option value="2">Долевая</option>
+              <option value="3">Общая долевая</option>
+              <option value="4">Общая совместная</option>
+
+            </select>
+          </label> -->
+
+
+        <label class='flex column'>
+          <span>Адрес организации</span>
+          <input name="address" placeholder="Адрес" required>
+        </label>
+
+        <label class='flex column'>
+          <span>Номер телефона юридического лица</span>
+          <input type="tel" name="tel" placeholder="+7 000 000 00 00" required>
+        </label>
+
+        <label class='flex column'>
+          <span>Контактное лицо</span>
+          <input name="kl" placeholder="Иванов Иван Иванович" required>
+        </label>
+
+        <label class='flex column'>
+          <span>Срок кредита (в месяцах): <span id="mv" style="font-size:1.3em;font-weight:bold"></span></span>
+          <input style='margin-bottom:0px;padding:0' type="range" value="12" id="month" name="month" min="12" max="360" step="1">
+          <div class="flex row" style="justify-content: space-between;">
+            <span>12</span><span>360</span>
+          </div>
+        </label>
+
+        <label class='flex column'>
+          <span>Сумма кредита: <span id="sv" style="font-size:1.3em;font-weight:bold"></span></span>
+          <input style='margin-bottom:0px;padding:0' type="range" value="50000" id="summ" name="summ" min="50000" max="3000000" step="10000">
+          <div class="flex row" style="justify-content: space-between;">
+            <span>50 000</span><span>3 000 000</span>
+          </div>
+
+        </label>
+
+        <div>Ежемесячный платеж с процентной ставкой - 7%</div>
+        <div class="flex row" id="result">0 рублей</div>
+
+        <button id="sendadd" class="flex row button" type="button">Оформить</button>
+
+      </form>
+
+    </div>
+  </div>
+
+
+
+  <div id="payment" style="display:none;">
+    <form class='flex column' name="payform" style="width:400px;">
+
+
+      <label class='flex column'>
+        <span>Номер договора займа</span>
+        <input name="iddog" placeholder="КД-1234" required>
+      </label>
+
+      <label class='flex column'>
+        <span>Сумма платежа</span>
+        <input type="number" name="summpay" placeholder="12345" required>
+      </label>
+
+      <button id="sendpay" class="flex row button" type="button">Оплатить</button>
+
+    </form>
+
+  </div>
+
+
+
+</body>
+<script>
+  
+
+  //localStorage.removeItem("debitors"); 
+  form = Object();
+  if (!localStorage.debitors) localStorage.debitors = JSON.stringify(Array()); //храним список должников
+
+  // console.log(JSON.parse(localStorage.debitors));
+
+
+
+
+
+  function calculation() { //// Обработка полей калькулятора и расчет платежа
+    summ = +document.querySelector("#summ").value; // Получить значение из поля ввода суммы
+    month = document.querySelector("#month").value; // из поля ввода месяцев
+    document.querySelector("#mv").innerHTML = month;
+    document.querySelector("#sv").innerHTML = summ.toLocaleString() + " рублей";
+
+    form.result = Math.round(summ / month + summ * 0.07 / month);
+
+    document.querySelector("#result").innerHTML = Math.round(form.result).toLocaleString() + " рублей";
+  }
+  calculation(); /// Вызов функции расчета
+
+
+  function addcredit() { /// Запись данных в базу данных о выдааче кредита
+
+    if (!localStorage.debitors) {
+      localStorage.debitors = JSON.stringify([]);
+      debitors = [];
+    }
+
+    spisok = JSON.parse(localStorage.debitors); //ищем последний номер договора
+    id = 1;
+    spisok.forEach(element => {
+      console.log("kd=" + element.kd);
+      if (element.kd >= id) id = element.kd + 1;
+    });
+
+
+    form.name = document.forms.credit.name.value;
+    form.address = document.forms.credit.address.value;
+    form.tel = document.forms.credit.tel.value;
+    form.kl = document.forms.credit.kl.value;
+    form.month = document.forms.credit.month.value;
+    form.summ = document.forms.credit.summ.value;
+    form.kd = id;
+
+    spisok.push(form);
+    localStorage.debitors = JSON.stringify(spisok);
+
+
+    document.querySelector("#container").innerHTML = document.querySelector('#credok').innerHTML;
+    document.forms.credit.name.value = "";
+    document.forms.credit.address.value = "";
+    document.forms.credit.tel.value = "";
+    document.forms.credit.kl.value = "";
+    document.forms.credit.month.value = 12;
+    document.forms.credit.summ.value = 50000;
+  }
+
+
+  function deblist() { /// вывод списка должников
+
+    if (localStorage.debitors.length < 1) {
+      document.querySelector("#container").innerHTML = "<div>Должников еще нет.</div>";
+      return;
+    }
+    spisok = JSON.parse(localStorage.debitors);
+    html = "<div>Всего должников:" + spisok.length + "<table><thead><td>Номер договора</td><td>Название</td><td>Телефон</td><td>Адрес</td><td>Контактное лицо</td><td>Сумма займа</td><td>Срок займа (месяцев)</td><td>Ежемесячный платеж</td></thead><tbody>";
+    spisok.forEach(element => {
+      html += "<tr><td>" + element.kd + "</td><td>" + element.name + "</td><td>" + element.tel + "</td><td>" + element.address + "</td><td>" + element.kl + "</td><td>" + element.summ.toLocaleString() + "</td><td>" + element.month + "</td><td>" + element.result.toLocaleString() + "</td></tr>";
+    });
+
+
+
+
+    html += "</tbody></table>";
+    document.querySelector("#container").innerHTML = html;
+  }
+
+
+
+
+
+  function add() { /// открытие формы создания кредита
+    document.querySelector('#container').innerHTML = document.querySelector('#addcredit').innerHTML;
+    document.querySelector("#sendadd").addEventListener("click", addcredit);
+    document.querySelector("#month").addEventListener("input", calculation);
+    document.querySelector("#summ").addEventListener("input", calculation);
+  }
+
+
+
+  add();
+
+  function pay() { /// открфтие формы создания платежа
+
+    document.querySelector("#container").innerHTML = document.querySelector("#payment").innerHTML;
+    document.querySelector("#sendpay").addEventListener("click", addpayment);
+
+  }
+
+
+  function addpayment() { /// сохранение платежа и вычитание у должника
+    if (document.forms.payform.iddog.value == "" || document.forms.payform.summpay.value == "") return;
+    if (localStorage.debitors.length < 1) {
+      document.querySelector("#container").innerHTML = "<div>Кредиты еще не выданы.</div>";
+      return;
+    }
+
+    spisok = JSON.parse(localStorage.debitors); // получаем массив должников из базы данных
+
+    spisok.forEach((element, key) => { // перебираем построчно список
+      if (spisok[key].kd == document.forms.payform.iddog.value) { // если номер договора из списка совпал с номером из формы платежа
+        spisok[key].summ -= document.forms.payform.summpay.value;//вычитааем из суммы долга этого должника сумму платежа 
+        if (spisok[key].summ <= 0) spisok[key].summ = 0; // если сумма платежа больше чем сумма долга то показыываем что он должен 0 а не значение с минусом
+      }
+
+    });
+
+    document.querySelector("#container").innerHTML = "<div>Платеж успешно внесен.</div>"; //показываем сообщение об успешном внесении платежа
+
+    localStorage.debitors = JSON.stringify(spisok);
+
+  }
+</script>
+
+</html>
